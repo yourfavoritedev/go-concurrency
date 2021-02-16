@@ -31,9 +31,9 @@ func main() {
 		go speak(v, &wg, speakChannel)
 	}
 
-	// wg.Wait() <-- do not do this without a goroutine, this will block and prevent the range loop from executing, causing a deadlock from sending to the channel
-	// wg.Wait() is synchronized to pass once all gorountines are complete, but they are blocked until the range loop executes
-	// unbuffed channels require a read-action (<-c) to accept the incoming value from a send-action (c<-)
+	// wg.Wait() <-- do not do this without a goroutine, this will block and prevent the range loop from executing, causing a deadlock
+	// wg.Wait() is synchronized to pass once all gorountines are complete, but they are blocked until the range over speakChannel executes
+	// unbuffed channels require a read-action (<-c) to accept the incoming value from a send-action (c<-), cannot write unless trying to read
 	// Wrapping wg.Wait() in a go-routine allows the below range loop to execute and read from the channel
 	go func() {
 		wg.Wait()
