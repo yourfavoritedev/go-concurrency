@@ -16,6 +16,7 @@ func main() {
 		results := make(chan Result)
 		// this goroutine will be responsible for writing to the results channel
 		go func() {
+			// close results channel after the for-loop finishes or when the done channel closes
 			defer close(results)
 			for _, url := range urls {
 				var result Result
@@ -39,13 +40,17 @@ func main() {
 	defer close(done)
 
 	urls := []string{"https://www.google.com", "https://badhost", "https://www.facebook.com"}
-	// read from channel
+	// read from channel, it will stop reading when the channel is closed
 	for result := range checkStatus(done, urls) {
 		/** By handling errors in the main goroutine we establish a separation of concerns.
 		The sub goroutine can focus on writing to the channel.
 		The main goroutine can make decisions about what to do with the errors. */
 		if result.Error != nil {
-			fmt.Printf("error: %v\n", result.Error) // will panic if we do not continue
+			/** this will panic if we do not continue (go to the next iteration)
+			 because the current result wiil have a Response of nil
+			 trying to print Response.Status (nil has no fields/values) will result in a panic
+			**/
+			fmt.Printf("error: %v\n", result.Error)
 			continue
 		}
 		fmt.Printf("Response: %v\n", result.Response.Status)

@@ -7,15 +7,17 @@ import (
 )
 
 func speak(phrase string, wg *sync.WaitGroup, c chan string) {
-	defer wg.Done()
-	words := strings.Split(phrase, " ")
-	for _, w := range words {
-		/**
-		sending to an unbuffered channel (which is full by default) without any action to read from the channel
-		will block the goroutine from completing and can create a deadlock
-		*/
-		c <- w
-	}
+	go func() {
+		defer wg.Done()
+		words := strings.Split(phrase, " ")
+		for _, w := range words {
+			/**
+			writing to an unbuffered channel (which is full by default) without any action to read from the channel
+			will block the goroutine from completing, creating a deadlock
+			*/
+			c <- w
+		}
+	}()
 }
 
 func main() {
@@ -28,11 +30,11 @@ func main() {
 
 	for _, v := range allPhrases {
 		wg.Add(1)
-		go speak(v, &wg, speakChannel)
+		speak(v, &wg, speakChannel)
 	}
 
-	// wg.Wait() <-- do not do this without a goroutine, this will block and prevent the range loop from executing, causing a deadlock
-	// wg.Wait() is synchronized to pass once all gorountines are complete, but they are blocked until the range over speakChannel executes
+	// wg.Wait() <-- do not do this without a go-routine, this will block and prevent the range loop from executing, causing a deadlock
+	// wg.Wait() is synchronized to pass once all go-routines are completed, but the go-routines are blocked until the range (read) over speakChannel executes
 	// unbuffed channels require a read-action (<-c) to accept the incoming value from a send-action (c<-), cannot write unless trying to read
 	// Wrapping wg.Wait() in a go-routine allows the below range loop to execute and read from the channel
 	go func() {
