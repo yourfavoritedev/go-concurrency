@@ -34,8 +34,9 @@ func main() {
 	}
 
 	// wg.Wait() <-- do not do this without a go-routine, this will block and prevent the range loop from executing, causing a deadlock
-	// wg.Wait() is synchronized to pass once all go-routines are completed, but the go-routines are blocked until the range (read) over speakChannel executes
-	// unbuffed channels require a read-action (<-c) to accept the incoming value from a send-action (c<-), cannot write unless trying to read
+	// wg.Wait() is synchronized to pass once the WaitGroup counter hits 0, so all go-routines should be completed (speak will decrement the WaitGroup),
+	// but the go-routines are blocked until the range (read) over speakChannel executes...
+	// unbuffed channels require a read-action (<-c) to accept the incoming value from a send-action (c<-), we cannot write unless trying to read
 	// Wrapping wg.Wait() in a go-routine allows the below range loop to execute and read from the channel
 	go func() {
 		wg.Wait()
